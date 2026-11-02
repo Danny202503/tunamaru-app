@@ -2,10 +2,8 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
 import { 
-  ArrowLeft, 
-  CheckCircle2, 
+  Building, 
   MapPin, 
   Phone, 
   Radio, 
@@ -13,60 +11,86 @@ import {
   X, 
   Send, 
   Download, 
+  Sparkles, 
   Volume2, 
   VolumeX, 
   ShieldCheck, 
-  ExternalLink 
+  Check, 
+  Clock, 
+  ExternalLink,
+  ChevronRight,
+  Ticket,
+  Lock,
+  ArrowRight,
+  ArrowLeft,
+  CheckCircle2,
+  QrCode,
+  Car,
+  Store,
+  RefreshCw,
+  Star,
+  Receipt,
+  Camera,
+  Layers,
+  Thermometer,
+  Bell
 } from 'lucide-react';
 import { TUNAMARU_STORE } from '@/lib/constants';
 
-export default function OrderTrackingPage() {
-  const params = useParams();
-  const orderId = params?.id ? String(params.id) : 'JF-20261030-99482';
+// 스티치 원본 20여 종 메뉴 데이터베이스
+const FULL_MENU_DATABASE = [
+  { id: 'volcano-roll', name: 'VOLCANO ROLL 볼케이노 롤', category: 'roll', price: 480, tag: '👑 롤 인기 1위', desc: '구운 해산물과 매콤 달콤한 특제 용암 소스가 화려하게 얹힌 시그니처 롤', img: 'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?auto=format&fit=crop&w=500&q=80' },
+  { id: 'aburi-salmon', name: 'ABURI SALMON ROLL 아부리 살몬 롤', category: 'roll', price: 375, tag: '인기 베스트', desc: '직화 토치 연어, 카니, 오이 롤, 특제 스파이시 마요 글레이즈 & 날치알', img: 'https://images.unsplash.com/photo-1611143669185-af224c5e3252?auto=format&fit=crop&w=500&q=80' },
+  { id: 'salmon-sashimi', name: 'SALMON SASHIMI 생연어 사시미', category: 'sashimi', price: 430, tag: '도요스 직송', desc: '두툼한 프리미엄 생연어, 시소 잎, 수제 제빙 베딩 극저온 패키징', img: 'https://images.unsplash.com/photo-1534422298391-e4f8c172dddb?auto=format&fit=crop&w=500&q=80' },
+  { id: 'day-of-sashimi', name: 'DAY OF SASHIMI 오늘의 모둠 사시미', category: 'sashimi', price: 3900, tag: '👑 시그니처', desc: '참다랑어 오도로, 메카도로, 연어, 광어 등 당일 최고급 부위 모둠 (3~4인)', img: 'https://images.unsplash.com/photo-1579584425555-c3ce17fd4351?auto=format&fit=crop&w=500&q=80' },
+  { id: 'otoro-premium', name: 'OTORO PREMIUM (S) 참다랑어 프리미엄', category: 'sashimi', price: 2800, tag: '최고급 참치', desc: '도쿄 직송 최상급 참다랑어 오도로의 마블링과 깊은 풍미', img: 'https://images.unsplash.com/photo-1617196034796-73dfa7b1fd56?auto=format&fit=crop&w=500&q=80' },
+  { id: 'mini-sashimi', name: 'MINI SASHIMI 미니 사시미', category: 'sashimi', price: 500, tag: '인기 혼술', desc: '혼자서도 부담없이 즐기는 츠나마루 당일 특선 미니 모둠 사시미', img: 'https://images.unsplash.com/photo-1534422298391-e4f8c172dddb?auto=format&fit=crop&w=500&q=80' },
+  { id: 'day-of-sushi', name: 'DAY OF SUSHI (10PCS) 모둠 초밥', category: 'sushi', price: 420, tag: '추천 초밥', desc: '참치, 연어, 새우, 타마고 등 셰프 엄선 10피스 모둠 스시', img: 'https://images.unsplash.com/photo-1563245372-f21724e3856d?auto=format&fit=crop&w=500&q=80' },
+  { id: 'premium-sushi', name: 'PREMIUM SUSHI (10PCS) 특선 초밥', category: 'sushi', price: 520, tag: '명품 스시', desc: '참다랑어 주도로, 성게알(우니), 장어, 전복 등 호화 10종', img: 'https://images.unsplash.com/photo-1553621042-f6e147245754?auto=format&fit=crop&w=500&q=80' },
+  { id: 'hutomaki', name: 'HUTOMAKI 대왕 후토마끼', category: 'roll', price: 780, tag: '장인 수제', desc: '참치, 연어, 타마고, 새우튀김, 아보카도를 가득 말아낸 정통 대왕마끼', img: 'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?auto=format&fit=crop&w=500&q=80' },
+  { id: 'gyu-don', name: 'GYU DON 소고기 덮밥', category: 'don', price: 450, tag: '인기 식사', desc: '특제 타레 소스에 부드럽게 조려낸 소고기와 양파가 듬뿍 올라간 규동', img: 'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?auto=format&fit=crop&w=500&q=80' },
+  { id: 'katsu-don', name: 'KATSU DON 수제 돈카츠 덮밥', category: 'don', price: 420, tag: '바삭 고소', desc: '바삭하게 튀긴 수제 돈카츠 위에 쯔유와 달걀을 얹은 가츠동', img: 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=500&q=80' },
+  { id: 'nagasaki-ramen', name: 'NAGASAKI RAMEN 나가사끼 라멘', category: 'noodle', price: 400, tag: '얼큰 시원', desc: '진한 사골육수에 불맛 입힌 해산물과 야채가 들어간 나가사끼 짬뽕', img: 'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?auto=format&fit=crop&w=500&q=80' },
+  { id: 'hwayo-25', name: 'HWAYO 25 프리미엄 화요 25', category: 'drinks', price: 900, tag: '증류 명주', desc: '깊고 깨끗한 풍미를 자랑하는 한국 전통 프리미엄 증류식 소주 (375ml)', img: 'https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?auto=format&fit=crop&w=500&q=80' },
+];
 
-  // 시뮬레이션 단계 상태 (2, 4, 5)
-  const [currentStage, setCurrentStage] = useState<number>(2);
+export default function MasterPrototypePage() {
+  // 5대 독립 화면 전환 상태 (1: 메뉴&카트, 2: 체크아웃, 3: 결제승인전표, 4: 실시간관제, 5: 배송완료리포트)
+  const [activeScreen, setActiveScreen] = useState<1 | 2 | 3 | 4 | 5>(1);
+
+  // 화면 1: 메뉴 및 카트 드로어 상태
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [isCartDrawerOpen, setIsCartDrawerOpen] = useState<boolean>(false);
+  const [cartItems, setCartItems] = useState([
+    { id: 'salmon-sashimi', name: 'Salmon Sashimi (생연어 사시미)', price: 430, qty: 1, option: '시소 잎 3장 추가, 생와사비 별도' },
+    { id: 'aburi-salmon', name: 'Aburi Salmon Roll (아부리 살몬 롤)', price: 375, qty: 1, option: '직화 토치 • 스파이시 마요 글레이즈' },
+  ]);
+
+  // 화면 2: 체크아웃 폼 상태
+  const [fulfillmentMode, setFulfillmentMode] = useState<'delivery' | 'pickup'>('delivery');
+  const [recipientName, setRecipientName] = useState<string>('Danny Jang');
+  const [recipientPhone, setRecipientPhone] = useState<string>('0917 123 4567');
+  const [buildingName, setBuildingName] = useState<string>('Makati Diamond Residences');
+  const [unitFloor, setUnitFloor] = useState<string>('Tower 1, Unit 18-B');
+  const [streetAddress, setStreetAddress] = useState<string>('118 Legazpi St, Legazpi Village, Makati City');
+  const [dropoffProtocol, setDropoffProtocol] = useState<'lobby' | 'meet' | 'unit'>('lobby');
+  const [paymentMethod, setPaymentMethod] = useState<'ewallet' | 'bnpl' | 'qrph' | 'cards' | 'cod'>('ewallet');
+
+  // 화면 4 & 5: 텔레메트리, 사운드, 햅틱, 채팅 상태
   const [isAudioEnabled, setIsAudioEnabled] = useState<boolean>(true);
   const [isSatelliteView, setIsSatelliteView] = useState<boolean>(false);
-
-  // 모달 제어 상태
   const [isNearArrivalModalOpen, setIsNearArrivalModalOpen] = useState<boolean>(false);
   const [isDeliveryCompletedModalOpen, setIsDeliveryCompletedModalOpen] = useState<boolean>(false);
-  const [isHistoryModalOpen, setIsHistoryModalOpen] = useState<boolean>(false);
-  const [isReorderDrawerOpen, setIsReorderDrawerOpen] = useState<boolean>(false);
-  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState<boolean>(false);
-  const [isGiftModalOpen, setIsGiftModalOpen] = useState<boolean>(false);
-
-  // 선물 및 잔액 인터랙션 상태
-  const [selectedGift, setSelectedGift] = useState<{ name: string; icon: string }>({
-    name: '콜라 / Coke (330ml)',
-    icon: '🥤',
-  });
-  const [walletBalance, setWalletBalance] = useState<number>(1695);
   const [chatTab, setChatTab] = useState<'chef' | 'courier'>('chef');
   const [chatInput, setChatInput] = useState<string>('');
+  const [rating, setRating] = useState<number>(5);
   const [toastMsg, setToastMsg] = useState<{ text: string; icon: string } | null>(null);
 
-  // 1:1 채팅 메시지 스트림
-  const [chatMessages, setChatMessages] = useState<Array<{ sender: string; time: string; text: string; isUser: boolean; isProof?: boolean }>>([
-    {
-      sender: 'Tunamaru Head Chef (Takeshi)',
-      time: '19:15',
-      text: "고객님, 주문하신 '연어 사시미'와 '아부리 연어 롤' 신선하게 극저온 패킹 완료되었습니다. 요청하신 초생강과 생와사비는 넉넉히 동봉해 드렸습니다.",
-      isUser: false,
-    },
-    {
-      sender: '나 (Danny Jang)',
-      time: '19:16',
-      text: '감사합니다! 엘리베이터 카드키 인증이 필요하니 도착하시면 로비에서 연락 부탁드립니다.',
-      isUser: true,
-    },
-    {
-      sender: '라이더 Danilo Reyes',
-      time: '19:18',
-      text: '네 고객님! 마카티 다이아몬드 레지던스 로비 데스크 안내 확인했습니다. 전용 극저온 보냉함(3.4°C 유지)으로 신속히 이동 중입니다.',
-      isUser: false,
-    },
+  // 채팅 메시지 스트림
+  const [chatMessages, setChatMessages] = useState([
+    { sender: 'Tunamaru Head Chef (Takeshi)', time: '19:15', text: '고객님, 주문하신 연어 사시미와 아부리 롤 신선하게 극저온 패킹 완료되었습니다. 요청하신 초생강과 생와사비는 넉넉히 동봉해 드렸습니다.', isUser: false },
+    { sender: '나 (Danny Jang)', time: '19:16', text: '감사합니다! 엘리베이터 카드키 인증이 필요하니 도착하시면 로비에서 연락 부탁드립니다.', isUser: true },
+    { sender: '라이더 Danilo Reyes', time: '19:18', text: '네 고객님! 마카티 다이아몬드 레지던스 로비 데스크 안내 확인했습니다. 전용 극저온 보냉함(3.4°C 유지)으로 신속히 이동 중입니다.', isUser: false },
   ]);
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -74,10 +98,10 @@ export default function OrderTrackingPage() {
 
   const showToast = (text: string, icon = '🔔') => {
     setToastMsg({ text, icon });
-    setTimeout(() => setToastMsg(null), 3500);
+    setTimeout(() => setToastMsg(null), 3000);
   };
 
-  // Web Audio API Synthesizer
+  // Web Audio API Synthesizer (외부 MP3 의존성 제로)
   const playChime = (type: 'arrival' | 'fanfare' | 'click') => {
     if (!isAudioEnabled || typeof window === 'undefined') return;
     try {
@@ -123,7 +147,7 @@ export default function OrderTrackingPage() {
       } else {
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
-        osc.frequency.setValueAtTime(600, now);
+        osc.frequency.setValueAtTime(700, now);
         gain.gain.setValueAtTime(0.1, now);
         gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
         osc.connect(gain);
@@ -132,7 +156,7 @@ export default function OrderTrackingPage() {
         osc.stop(now + 0.2);
       }
     } catch (e) {
-      console.warn('Audio error:', e);
+      console.warn(e);
     }
   };
 
@@ -156,7 +180,7 @@ export default function OrderTrackingPage() {
 
     const colors = ['#E5A93C', '#F59E0B', '#FDE68A', '#10B981', '#FFFFFF'];
     const particles = Array.from({ length: 80 }).map(() => ({
-      x: canvas.width * 0.5 + (Math.random() - 0.5) * 100,
+      x: canvas.width * 0.5 + (Math.random() - 0.5) * 120,
       y: canvas.height * 0.45,
       vx: (Math.random() - 0.5) * 14,
       vy: -(Math.random() * 12 + 6),
@@ -188,538 +212,666 @@ export default function OrderTrackingPage() {
     render();
   };
 
-  const handleStageChange = (stage: number) => {
-    setCurrentStage(stage);
-    if (stage === 5) {
-      playChime('fanfare');
-      triggerHaptic([120, 60, 200]);
-      setIsDeliveryCompletedModalOpen(true);
-      setTimeout(() => startConfetti(), 100);
-      showToast('Stage 5: 고객 비대면 수령이 완료되었습니다!', '🎺');
-      setChatMessages((prev) => [
-        ...prev,
-        {
-          sender: 'Danilo Reyes (배달 완료)',
-          time: '19:48',
-          text: '📦 [배달 완료] 마카티 다이아몬드 레지던스 타워 1 로비 컨시어지(Mr. Santos)께 요청하신 대로 안전하게 전달 완료했습니다. 맛있게 드세요!',
-          isUser: false,
-          isProof: true,
-        },
-      ]);
-    } else if (stage === 4) {
-      playChime('click');
-      triggerHaptic([80]);
-      showToast('Stage 4: 전담 라이더 Danilo 신속 이동 중', '🏍️');
-    } else {
-      showToast('Stage 2: 셰프 조리 및 극저온 패킹 모드 복귀', '🍣');
-    }
-  };
+  // 장바구니 계산
+  const totalItemCount = cartItems.reduce((acc, cur) => acc + cur.qty, 0);
+  const subtotal = cartItems.reduce((acc, cur) => acc + cur.price * cur.qty, 0);
+  const deliveryFee = fulfillmentMode === 'delivery' ? 50 : 0;
+  const grandTotal = Math.max(0, subtotal + deliveryFee - 50);
 
-  const handleSendChat = (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    if (!chatInput.trim()) return;
-    const userText = chatInput.trim();
-    setChatMessages((prev) => [
-      ...prev,
-      {
-        sender: '나 (Danny Jang)',
-        time: '방금 전',
-        text: userText,
-        isUser: true,
-      },
-    ]);
-    setChatInput('');
-    showToast('메시지가 전송되었습니다.', '💬');
-
-    setTimeout(() => {
-      setChatMessages((prev) => [
-        ...prev,
-        {
-          sender: chatTab === 'chef' ? 'Tunamaru 주방 매니저' : '라이더 Danilo Reyes',
-          time: '방금 전',
-          text: '네 고객님, 전달해 주신 요청사항 정확히 확인하여 안전하게 조치하겠습니다.',
-          isUser: false,
-        },
-      ]);
-    }, 1200);
-  };
+  const filteredDishes = selectedCategory === 'all' 
+    ? FULL_MENU_DATABASE 
+    : FULL_MENU_DATABASE.filter(d => d.category === selectedCategory);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-7 text-stone-200">
+    <div className="min-h-screen bg-[#0C0A09] text-stone-200 selection:bg-[#E5A93C] selection:text-black flex flex-col">
+      
+      {/* ========================================================
+          GLOBAL: 5단계 라이브 쇼케이스 스위처 (Stitch 5대 화면 프리뷰)
+          ======================================================== */}
+      <nav className="sticky top-0 z-50 bg-[#161311] border-b border-[#E5A93C]/40 px-4 py-2.5 shadow-2xl backdrop-blur-md">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-[#E5A93C] animate-pulse" />
+            <span className="text-xs font-serif font-black tracking-widest text-[#E5A93C] uppercase">
+              Stitch 5-Stage Live Preview:
+            </span>
+          </div>
+
+          <div className="flex items-center gap-1.5 flex-wrap justify-center">
+            {[
+              { id: 1, label: '1. 메뉴 & 카트', sub: 'Image 1' },
+              { id: 2, label: '2. 체크아웃 폼', sub: 'Image 3' },
+              { id: 3, label: '3. 결제 정산전표', sub: 'Image 4·5' },
+              { id: 4, label: '4. 실시간 관제', sub: 'Image 2·7' },
+              { id: 5, label: '5. 배송완료 리포트', sub: 'Image 6' },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => {
+                  setActiveScreen(tab.id as any);
+                  playChime('click');
+                  showToast(`${tab.label} 화면으로 전환되었습니다.`, '⚡');
+                }}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                  activeScreen === tab.id
+                    ? 'bg-[#E5A93C] text-stone-950 shadow-[0_0_15px_rgba(229,169,60,0.4)] scale-105'
+                    : 'bg-[#0C0A09] text-stone-400 hover:text-white border border-stone-800'
+                }`}
+              >
+                <span>{tab.label}</span>
+              </button>
+            ))}
+          </div>
+
+          <div className="hidden md:flex items-center gap-2 text-xs text-stone-400">
+            <button
+              onClick={() => {
+                setIsAudioEnabled(!isAudioEnabled);
+                showToast(isAudioEnabled ? '효과음 음소거' : '효과음 켬', isAudioEnabled ? '🔇' : '🔊');
+              }}
+              className="p-1.5 rounded-lg bg-[#0C0A09] border border-stone-800 text-stone-300 hover:text-[#E5A93C] transition"
+            >
+              {isAudioEnabled ? <Volume2 className="w-4 h-4 text-[#E5A93C]" /> : <VolumeX className="w-4 h-4" />}
+            </button>
+            <span className="font-mono text-[11px] text-[#E5A93C] font-semibold">TUNA-MASTER-PRO</span>
+          </div>
+        </div>
+      </nav>
+
+      {/* 토스트 배너 */}
       {toastMsg && (
-        <div className="fixed top-24 right-4 sm:right-8 z-[100] flex items-center gap-2.5 px-4 py-3 rounded-xl bg-[#141210]/95 border border-[#E5A93C] text-white shadow-2xl animate-in slide-in-from-top-2">
-          <span className="text-base">{toastMsg.icon}</span>
-          <span className="text-xs sm:text-sm font-medium">{toastMsg.text}</span>
+        <div className="fixed top-20 right-6 z-[100] px-4 py-2.5 rounded-xl bg-[#1D1916] border border-[#E5A93C] text-[#E5A93C] text-xs font-bold shadow-2xl flex items-center gap-2 animate-in slide-in-from-top-2">
+          <span>{toastMsg.icon}</span>
+          <span>{toastMsg.text}</span>
         </div>
       )}
 
-      {/* 상단 관제 툴바 */}
-      <section className="bg-[#1D1B19] border border-stone-800 rounded-2xl p-4 sm:p-5 shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-[#E5A93C]/15 text-[#E5A93C] border border-[#E5A93C]/30 flex items-center justify-center shrink-0">
-            <Radio className="w-5 h-5 animate-pulse" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-bold uppercase tracking-wider text-[#E5A93C]">LIVE DISPATCH PIPELINE</span>
-              <span className="text-xs text-stone-600">|</span>
-              <span className="text-xs font-mono text-stone-400">주문번호: #{orderId}</span>
+      {/* ========================================================
+          화면 1: 메인 다이닝 메뉴 쇼케이스 & 장바구니 드로어 (Image 1)
+          ======================================================== */}
+      {activeScreen === 1 && (
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-in fade-in duration-300 flex-1">
+          {/* 상단 본점 공지 바 */}
+          <div className="bg-[#141210] border border-[#E5A93C]/30 rounded-xl px-4 py-2.5 mb-6 flex flex-wrap items-center justify-between gap-3 text-xs">
+            <div className="flex items-center gap-2 text-stone-300">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+              <strong className="text-white font-serif">Tunamaru Malate 본점</strong>
+              <span>• 직영 콜드체인 안심 배송 반경 6.0km (마닐라, 마카티, 파사이)</span>
             </div>
-            <p className="text-sm font-semibold text-stone-200 mt-0.5">
-              도요스 직송 오마카세 안심 콜드체인 실시간 관제 시스템
-            </p>
+            <a href="tel:09150990442" className="text-[#E5A93C] font-mono font-bold hover:underline">
+              Hotline: 0915 099 0442
+            </a>
           </div>
-        </div>
 
-        <div className="flex items-center gap-2 flex-wrap">
-          <button
-            onClick={() => {
-              setIsAudioEnabled(!isAudioEnabled);
-              showToast(isAudioEnabled ? '음소거되었습니다.' : '소리가 켜졌습니다.', isAudioEnabled ? '🔇' : '🔊');
-            }}
-            className="p-2 rounded-lg bg-[#141210] border border-stone-800 text-stone-400 hover:text-[#E5A93C] transition"
-            title="소리 온/오프"
-          >
-            {isAudioEnabled ? <Volume2 className="w-4 h-4 text-[#E5A93C]" /> : <VolumeX className="w-4 h-4" />}
-          </button>
-
-          <button
-            onClick={() => handleStageChange(2)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition border ${
-              currentStage === 2
-                ? 'bg-[#E5A93C] text-stone-950 border-[#E5A93C] shadow-lg'
-                : 'bg-[#15120F] text-stone-400 border-stone-800 hover:text-white'
-            }`}
-          >
-            Stage 2: 조리 및 패킹
-          </button>
-
-          <button
-            onClick={() => handleStageChange(4)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition border ${
-              currentStage === 4
-                ? 'bg-[#E5A93C] text-stone-950 border-[#E5A93C] shadow-lg'
-                : 'bg-[#15120F] text-stone-400 border-stone-800 hover:text-white'
-            }`}
-          >
-            Stage 4: 라이더 배송 중
-          </button>
-
-          <button
-            onClick={() => handleStageChange(5)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition border ${
-              currentStage === 5
-                ? 'bg-emerald-400 text-stone-950 border-emerald-400 shadow-lg'
-                : 'bg-[#15120F] text-stone-400 border-stone-800 hover:text-emerald-400'
-            }`}
-          >
-            Stage 5: 배송 완료 전환
-          </button>
-
-          <button
-            onClick={() => {
-              playChime('arrival');
-              triggerHaptic([100, 50, 100, 50, 200]);
-              setIsNearArrivalModalOpen(true);
-            }}
-            className="px-3 py-1.5 rounded-lg bg-[#E5A93C]/15 border border-[#E5A93C]/40 text-[#E5A93C] text-xs font-bold hover:bg-[#E5A93C] hover:text-stone-950 transition"
-          >
-            ⚡ 도착 3분 전 알림
-          </button>
-        </div>
-      </section>
-
-      {/* 5단계 파이프라인 */}
-      <section className="bg-[#1D1B19] border border-stone-800 rounded-2xl p-5 sm:p-6 shadow-xl space-y-4">
-        <div className="flex items-center justify-between pb-3 border-b border-stone-800 text-xs">
-          <span className="font-bold uppercase tracking-wider text-stone-200">배송 라이프사이클 단계별 현황</span>
-          <span className="text-[#E5A93C] font-mono font-semibold">
-            {currentStage === 5 ? '총 30분 소요 (정시 인계 100% 충족)' : '예상 잔여 시간: 약 18~28분'}
-          </span>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
-          {[
-            { stage: 1, title: '주문 접수 · 승인', time: '07:18 PM 완료', done: true },
-            { stage: 2, title: '셰프 조리 & 손질', time: currentStage >= 2 ? '07:26 PM 완료' : '대기 중', active: currentStage === 2, done: currentStage > 2 },
-            { stage: 3, title: '크라이오 안심 실링', time: currentStage >= 3 ? '07:28 PM 2.6°C 냉장' : '대기 중', active: currentStage === 3, done: currentStage > 3 },
-            { stage: 4, title: '전담 라이더 배송', time: currentStage >= 4 ? 'Danilo 기사 주행 중' : '예정 07:34 PM', active: currentStage === 4, done: currentStage > 4 },
-            { stage: 5, title: '고객 비대면 수령 완료', time: currentStage === 5 ? '19:48 PHT 로비 보관' : '목표 07:48 PM', active: currentStage === 5, done: currentStage === 5 },
-          ].map((st) => (
-            <div
-              key={st.stage}
-              className={`p-3.5 rounded-xl border flex flex-col justify-between transition ${
-                st.active
-                  ? 'border-[#E5A93C] bg-gradient-to-br from-[#1D1B19] to-[#25201A] shadow-[0_0_15px_rgba(229,169,60,0.25)] text-[#E5A93C]'
-                  : st.done
-                  ? 'border-emerald-500/40 bg-[#151311] text-emerald-400'
-                  : 'border-stone-800 bg-[#151311] text-stone-500'
-              }`}
+          <div className="border-b border-stone-800 pb-6 mb-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
+            <div>
+              <span className="text-xs uppercase tracking-widest text-[#E5A93C] font-semibold">
+                綱割烹 • OFFICIAL DIGITAL ORDERING
+              </span>
+              <h1 className="text-3xl sm:text-5xl font-serif font-bold text-white mt-1">온라인 주문 Order Online</h1>
+              <p className="text-xs sm:text-sm text-stone-400 mt-1 max-w-xl">
+                도쿄 도요스 시장 직송 최고급 참치와 신선 사시미, 시그니처 롤과 이자카야 일품요리를 당일 조리하여 배송합니다.
+              </p>
+            </div>
+            <button
+              onClick={() => setIsCartDrawerOpen(true)}
+              className="px-5 py-2.5 rounded-full bg-[#E5A93C] text-stone-950 font-black text-xs sm:text-sm shadow-lg flex items-center gap-2 hover:bg-[#ffc665] transition"
             >
-              <div className="flex items-center justify-between mb-1.5">
-                <span className="text-[11px] font-bold uppercase">Stage 0{st.stage}</span>
-                {st.done ? (
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                ) : st.active ? (
-                  <span className="w-2 h-2 rounded-full bg-[#E5A93C] animate-ping" />
-                ) : null}
-              </div>
-              <p className="text-sm font-bold text-white truncate">{st.title}</p>
-              <span className="text-[11px] font-mono mt-2 opacity-80">{st.time}</span>
-            </div>
-          ))}
-        </div>
-      </section>
+              <ShoppingBag className="w-4 h-4" />
+              <span>장바구니 확인 ({totalItemCount}개 • ₱{subtotal})</span>
+            </button>
+          </div>
 
-      {/* 2컬럼 레이아웃 */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-7 items-start">
-        {/* 좌측: 레이더 관제 맵 & 채팅 */}
-        <section className="lg:col-span-7 xl:col-span-8 space-y-6">
-          <div className="bg-[#141210] border border-stone-800 rounded-2xl overflow-hidden shadow-xl">
-            <div className="p-4 sm:p-5 border-b border-stone-800 flex flex-wrap items-center justify-between gap-3 bg-[#110E0C]">
-              <div>
-                <div className="flex items-center gap-2">
-                  <h3 className="text-xs font-bold tracking-widest uppercase font-serif text-white">
-                    LIVE TRANSIT & GOOGLE MAPS TELEMETRY
-                  </h3>
-                  <span className="px-2 py-0.5 rounded text-[10px] bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
-                    센서 정상 작동
-                  </span>
+          {/* 카테고리 필터 탭 */}
+          <div className="flex items-center gap-2 overflow-x-auto pb-4 mb-6 scrollbar-none">
+            {[
+              { id: 'all', label: '전체 All' },
+              { id: 'sashimi', label: 'Sashimi 刺身' },
+              { id: 'sushi', label: 'Sushi 寿司' },
+              { id: 'roll', label: 'Roll 롤' },
+              { id: 'don', label: 'Don 덮밥' },
+              { id: 'noodle', label: 'Noodle 면류' },
+              { id: 'drinks', label: 'Drinks 주류·음료' },
+            ].map((cat) => (
+              <button
+                key={cat.id}
+                onClick={() => setSelectedCategory(cat.id)}
+                className={`px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition ${
+                  selectedCategory === cat.id
+                    ? 'bg-[#E5A93C] text-stone-950 shadow-md'
+                    : 'bg-[#141210] text-stone-400 border border-stone-800 hover:text-white'
+                }`}
+              >
+                {cat.label}
+              </button>
+            ))}
+          </div>
+
+          {/* 20여 종 메뉴 그리드 */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-20">
+            {filteredDishes.map((dish) => (
+              <div key={dish.id} className="bg-[#141210] border border-stone-800 rounded-2xl overflow-hidden shadow-lg group hover:border-[#E5A93C]/50 transition flex flex-col justify-between">
+                <div>
+                  <div className="relative h-48 overflow-hidden bg-stone-900">
+                    <img src={dish.img} alt={dish.name} className="w-full h-full object-cover group-hover:scale-105 transition duration-500" />
+                    <span className="absolute top-3 left-3 px-2 py-0.5 rounded bg-[#E5A93C] text-stone-950 text-[10px] font-black uppercase shadow">
+                      {dish.tag}
+                    </span>
+                  </div>
+                  <div className="p-5">
+                    <h3 className="font-serif font-bold text-white text-base group-hover:text-[#E5A93C] transition">{dish.name}</h3>
+                    <p className="text-xs text-stone-400 mt-1 leading-relaxed line-clamp-2">{dish.desc}</p>
+                  </div>
                 </div>
-                <p className="text-[11px] text-stone-500 mt-0.5">
-                  Route: Malate Flagship (Roxas Blvd) → Makati Diamond Residences
-                </p>
+                <div className="px-5 pb-5 pt-3 border-t border-stone-800/80 flex items-center justify-between">
+                  <span className="text-lg font-mono font-black text-[#E5A93C]">₱{dish.price}.00</span>
+                  <button
+                    onClick={() => {
+                      setCartItems([...cartItems, { id: dish.id, name: dish.name, price: dish.price, qty: 1, option: '기본 손질 및 포장' }]);
+                      setIsCartDrawerOpen(true);
+                      showToast(`${dish.name}이 장바구니에 담겼습니다.`, '🍣');
+                    }}
+                    className="px-3.5 py-1.5 rounded-xl bg-[#1C1814] hover:bg-[#E5A93C] text-stone-300 hover:text-stone-950 border border-stone-700 text-xs font-bold transition"
+                  >
+                    + 담기
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* 하단 플로팅 장바구니 바 */}
+          <div 
+            onClick={() => setIsCartDrawerOpen(true)}
+            className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 w-11/12 max-w-xl bg-gradient-to-r from-[#E5A93C] to-[#F59E0B] text-stone-950 font-black px-6 py-3.5 rounded-full shadow-2xl flex items-center justify-between cursor-pointer hover:brightness-110 active:scale-95 transition"
+          >
+            <div className="flex items-center gap-3">
+              <ShoppingBag className="w-5 h-5" />
+              <span className="text-sm">View cart • {totalItemCount} items</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="font-mono text-base font-extrabold">₱{subtotal}.00</span>
+              <ChevronRight className="w-4 h-4" />
+            </div>
+          </div>
+
+          {/* 슬라이드 장바구니 드로어 */}
+          {isCartDrawerOpen && (
+            <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex justify-end">
+              <aside className="w-full max-w-md bg-[#141210] border-l border-stone-800 h-full flex flex-col justify-between p-6 overflow-y-auto animate-in slide-in-from-right">
+                <div>
+                  <div className="flex items-center justify-between pb-4 border-b border-stone-800">
+                    <h3 className="font-serif font-bold text-white text-lg flex items-center gap-2">
+                      <ShoppingBag className="w-5 h-5 text-[#E5A93C]" /> 장바구니 (Cart)
+                    </h3>
+                    <button onClick={() => setIsCartDrawerOpen(false)} className="text-stone-400 hover:text-white">
+                      <X className="w-5 h-5" />
+                    </button>
+                  </div>
+
+                  {/* 3개 이상 무료 음료 배너 */}
+                  <div className="mt-4 p-3 rounded-xl bg-[#E5A93C]/15 border border-[#E5A93C]/40 text-xs space-y-1">
+                    <span className="font-bold text-[#E5A93C] flex items-center gap-1.5">
+                      🎁 3개 이상 주문 특별 프로모션 달성!
+                    </span>
+                    <p className="text-[11px] text-stone-300">오마카세 무료 음료 증정 (콜라 330ml 무료 포함)</p>
+                  </div>
+
+                  <div className="mt-4 space-y-3 text-xs">
+                    {cartItems.map((item, index) => (
+                      <div key={index} className="p-3.5 bg-[#0C0A09] border border-stone-800 rounded-xl space-y-1">
+                        <div className="flex justify-between items-start">
+                          <span className="font-bold text-white">{item.name}</span>
+                          <span className="font-mono text-[#E5A93C] font-bold">₱{item.price}.00</span>
+                        </div>
+                        <p className="text-[10px] text-stone-500">{item.option}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="pt-4 border-t border-stone-800 space-y-3">
+                  <div className="flex justify-between text-xs text-stone-400">
+                    <span>주문 소계</span>
+                    <span className="font-mono text-white">₱{subtotal}.00</span>
+                  </div>
+                  <div className="flex justify-between text-base font-bold text-white">
+                    <span>최종 결제 금액</span>
+                    <span className="font-mono text-xl text-[#E5A93C]">₱{grandTotal}.00</span>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setIsCartDrawerOpen(false);
+                      setActiveScreen(2);
+                      showToast('체크아웃 폼으로 이동합니다.', '📋');
+                    }}
+                    className="w-full py-4 rounded-xl bg-[#E5A93C] hover:bg-[#ffc665] text-stone-950 font-black text-sm shadow-lg flex items-center justify-center gap-2 transition"
+                  >
+                    <span>주문서 작성 및 체크아웃 진행하기 →</span>
+                  </button>
+                </div>
+              </aside>
+            </div>
+          )}
+        </main>
+      )}
+
+      {/* ========================================================
+          화면 2: 다이렉트 체크아웃 & 마닐라 콘도 폼 (Image 3)
+          ======================================================== */}
+      {activeScreen === 2 && (
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-in fade-in duration-300 flex-1">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            <div className="lg:col-span-8 space-y-6">
+              <div className="bg-[#141210] p-6 rounded-2xl border border-stone-800 space-y-3">
+                <span className="text-[10px] uppercase font-bold tracking-widest bg-[#E5A93C]/20 text-[#E5A93C] px-2.5 py-0.5 rounded-full">
+                  Step 2 of 2
+                </span>
+                <h2 className="text-2xl font-serif font-bold text-white">주문서 작성 & 배송 확인</h2>
+                <p className="text-xs text-stone-400">마카티 및 BGC 콘도미니엄 로비 데스크 비대면 안심 직배송 서비스</p>
+
+                <div className="grid grid-cols-2 gap-2 p-1 bg-[#0C0A09] rounded-xl border border-stone-800 mt-4">
+                  <button
+                    onClick={() => setFulfillmentMode('delivery')}
+                    className={`py-3 rounded-lg text-xs font-bold transition ${fulfillmentMode === 'delivery' ? 'bg-[#181512] text-white shadow' : 'text-stone-400'}`}
+                  >
+                    자체 콜드체인 안심 배송 (+₱50)
+                  </button>
+                  <button
+                    onClick={() => setFulfillmentMode('pickup')}
+                    className={`py-3 rounded-lg text-xs font-bold transition ${fulfillmentMode === 'pickup' ? 'bg-[#181512] text-white shadow' : 'text-stone-400'}`}
+                  >
+                    말라테 본점 직접 픽업 (무료)
+                  </button>
+                </div>
               </div>
 
+              {/* 콘도 주소 폼 */}
+              <div className="bg-[#141210] p-6 rounded-2xl border border-stone-800 space-y-4">
+                <h3 className="text-sm font-bold text-white uppercase tracking-wider">수령인 정보 & 콘도 배송 상세</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                  <div>
+                    <label className="text-stone-400 block mb-1">수령인 성함</label>
+                    <input type="text" value={recipientName} onChange={(e) => setRecipientName(e.target.value)} className="w-full bg-[#0C0A09] border border-stone-800 rounded-xl p-2.5 text-white" />
+                  </div>
+                  <div>
+                    <label className="text-stone-400 block mb-1">연락처 (+63)</label>
+                    <input type="tel" value={recipientPhone} onChange={(e) => setRecipientPhone(e.target.value)} className="w-full bg-[#0C0A09] border border-stone-800 rounded-xl p-2.5 text-white font-mono" />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-stone-400 block mb-1 text-xs">콘도미니엄 빌딩명</label>
+                  <input type="text" value={buildingName} onChange={(e) => setBuildingName(e.target.value)} className="w-full bg-[#0C0A09] border border-stone-800 rounded-xl p-2.5 text-xs text-white" />
+                  <div className="flex gap-1.5 mt-2 flex-wrap text-[11px]">
+                    <span className="text-stone-500">빠른 선택:</span>
+                    {['Makati Diamond', 'Two Serendra BGC', 'Proscenium Rockwell'].map((c) => (
+                      <button key={c} onClick={() => setBuildingName(c)} className="px-2.5 py-1 rounded-full bg-[#181512] border border-stone-800 text-stone-300 hover:text-[#E5A93C]">
+                        {c}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                  <div>
+                    <label className="text-stone-400 block mb-1">동 / 타워 / 호수</label>
+                    <input type="text" value={unitFloor} onChange={(e) => setUnitFloor(e.target.value)} className="w-full bg-[#0C0A09] border border-stone-800 rounded-xl p-2.5 text-white" />
+                  </div>
+                  <div className="sm:col-span-2">
+                    <label className="text-stone-400 block mb-1">상세 도로명 주소</label>
+                    <input type="text" value={streetAddress} onChange={(e) => setStreetAddress(e.target.value)} className="w-full bg-[#0C0A09] border border-stone-800 rounded-xl p-2.5 text-white" />
+                  </div>
+                </div>
+
+                {/* 3단 수령 프로토콜 */}
+                <div className="pt-2">
+                  <label className="text-stone-400 block mb-2 text-xs">배송 수령 프로토콜</label>
+                  <div className="grid grid-cols-3 gap-2 text-xs">
+                    {[
+                      { id: 'lobby', title: '로비 컨시어지 보관', tag: '가장 신속' },
+                      { id: 'meet', title: '게이트 직접 대면 수령', tag: '일반' },
+                      { id: 'unit', title: '호실 문 앞 직배송', tag: '엘리베이터 패스' },
+                    ].map((p) => (
+                      <div
+                        key={p.id}
+                        onClick={() => setDropoffProtocol(p.id as any)}
+                        className={`p-3 rounded-xl border cursor-pointer transition ${dropoffProtocol === p.id ? 'border-[#E5A93C] bg-[#1A1612]' : 'border-stone-800 bg-[#0C0A09]'}`}
+                      >
+                        <span className="text-[10px] text-stone-500 block">{p.tag}</span>
+                        <span className="font-bold text-white block mt-0.5">{p.title}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* 결제 수단 선택 */}
+              <div className="bg-[#141210] p-6 rounded-2xl border border-stone-800 space-y-3">
+                <h3 className="text-sm font-bold text-white uppercase tracking-wider">Tara Pay 간편 결제 수단</h3>
+                <div className="space-y-2">
+                  {[
+                    { id: 'ewallet', name: 'e-Wallets (GCash, Maya, ShopeePay)', desc: '1-Click 바이오메트릭 간편 결제 (수수료 0%)' },
+                    { id: 'bnpl', name: 'Tara Pay Later (0% 무이자 할부)', desc: '사전 승인 한도 내 분할 납부' },
+                    { id: 'qrph', name: 'InstaPay QRPh National', desc: 'BDO, BPI, UnionBank 실시간 스캔 결제' },
+                    { id: 'cards', name: 'Credit / Debit Cards', desc: 'Visa, Mastercard, JCB (3D Secure 2.2)' },
+                  ].map((m) => (
+                    <div
+                      key={m.id}
+                      onClick={() => setPaymentMethod(m.id as any)}
+                      className={`p-3.5 rounded-xl border cursor-pointer transition flex justify-between items-center ${paymentMethod === m.id ? 'border-[#E5A93C] bg-[#1A1612]' : 'border-stone-800 bg-[#0C0A09]'}`}
+                    >
+                      <div>
+                        <p className="text-xs font-bold text-white">{m.name}</p>
+                        <p className="text-[10px] text-stone-400">{m.desc}</p>
+                      </div>
+                      {paymentMethod === m.id && <CheckCircle2 className="w-4 h-4 text-[#E5A93C]" />}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* 우측 결제 요약 카드 */}
+            <div className="lg:col-span-4 bg-[#141210] p-6 rounded-2xl border border-stone-800 space-y-4 lg:sticky lg:top-24">
+              <h3 className="font-serif font-bold text-white text-base">결제 예정 내역</h3>
+              <div className="space-y-2 text-xs text-stone-400 border-b border-stone-800 pb-3">
+                <div className="flex justify-between"><span>주문 상품 합계</span><span className="font-mono text-white">₱{subtotal}.00</span></div>
+                <div className="flex justify-between text-emerald-400"><span>Tara Pay 웰컴 할인</span><span className="font-mono font-bold">-₱50.00</span></div>
+              </div>
+              <div className="flex justify-between items-baseline">
+                <span className="text-xs text-stone-400">최종 승인 금액</span>
+                <span className="text-2xl font-mono font-black text-[#E5A93C]">₱{grandTotal}.00</span>
+              </div>
+              <button
+                onClick={() => {
+                  setActiveScreen(3);
+                  playChime('arrival');
+                  showToast('Tara Pay 결제가 승인되었습니다.', '💳');
+                }}
+                className="w-full py-4 rounded-xl bg-[#E5A93C] hover:bg-[#ffc665] text-stone-950 font-black text-sm shadow-lg transition"
+              >
+                Pay ₱{grandTotal}.00 with Tara Pay
+              </button>
+            </div>
+          </div>
+        </main>
+      )}
+
+      {/* ========================================================
+          화면 3: 결제 승인 정산 영수증 & 주방 전표 (Image 4 & 5)
+          ======================================================== */}
+      {activeScreen === 3 && (
+        <main className="max-w-4xl mx-auto px-4 py-8 animate-in fade-in duration-300 flex-1">
+          <div className="bg-[#141210] border border-[#E5A93C]/60 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6">
+            <div className="flex items-center justify-between border-b border-stone-800 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-xl border border-emerald-500/40">
+                  ✓
+                </div>
+                <div>
+                  <h2 className="text-lg font-serif font-bold text-white">결제 검증 및 정산 완료</h2>
+                  <p className="text-xs text-stone-400 font-mono">거래번호: #TP-20261030-99482-PH • 즉시 정산됨</p>
+                </div>
+              </div>
+              <div className="text-right">
+                <span className="text-xs text-stone-400 block">승인 금액</span>
+                <span className="text-3xl font-mono font-black text-[#E5A93C]">₱755.00 PHP</span>
+              </div>
+            </div>
+
+            {/* 품목 명세 카드 */}
+            <div className="p-4 rounded-xl bg-[#0C0A09] border border-stone-800 space-y-3 text-xs">
+              <div className="flex justify-between items-center text-stone-400 uppercase font-bold text-[10px] pb-2 border-b border-stone-800">
+                <span>주문 품목 및 주방 전표 (Ticket #TK-048)</span>
+                <span className="text-[#E5A93C]">말라테 본점 조리</span>
+              </div>
+              <div className="flex justify-between text-white font-medium"><span>1x Salmon Sashimi (생연어 사시미)</span><span className="font-mono">₱430.00</span></div>
+              <div className="flex justify-between text-white font-medium"><span>1x Aburi Salmon Roll (아부리 살몬 롤)</span><span className="font-mono">₱375.00</span></div>
+              <div className="flex justify-between text-emerald-400 font-bold"><span>🎁 [프로모션 사은품] 콜라 330ml 캔</span><span className="font-mono">FREE (₱0.00)</span></div>
+            </div>
+
+            {/* 다음 단계 점프 버튼 */}
+            <div className="pt-2">
+              <button
+                onClick={() => {
+                  setActiveScreen(4);
+                  playChime('click');
+                  showToast('실시간 라이브 텔레메트리 관제를 가동합니다.', '🛰️');
+                }}
+                className="w-full py-4 rounded-xl bg-[#E5A93C] hover:bg-[#ffc665] text-stone-950 font-black text-sm flex items-center justify-center gap-2 shadow-lg transition"
+              >
+                <span>실시간 콜드체인 배송 추적하기 (Live Radar) →</span>
+              </button>
+            </div>
+          </div>
+        </main>
+      )}
+
+      {/* ========================================================
+          화면 4: 실시간 배송 관제 & 라이더 레이더 맵 (Image 2 & 7)
+          ======================================================== */}
+      {activeScreen === 4 && (
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-in fade-in duration-300 flex-1 space-y-6">
+          <div className="bg-[#141210] border border-stone-800 rounded-2xl overflow-hidden shadow-xl">
+            <div className="p-4 border-b border-stone-800 flex flex-wrap items-center justify-between gap-3 bg-[#110E0C]">
+              <div className="flex items-center gap-2 text-xs">
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
+                <span className="font-serif font-bold text-white uppercase tracking-wider">LIVE TRANSIT RADAR</span>
+                <span className="text-stone-400 font-mono">| Danilo Reyes 라이더 이동 중 (IoT 3.4°C 유지)</span>
+              </div>
               <div className="flex items-center gap-2">
                 <button
-                  onClick={() => setIsSatelliteView(!isSatelliteView)}
-                  className="px-2.5 py-1.5 rounded-lg bg-[#181512] border border-stone-800 text-stone-300 hover:text-[#E5A93C] text-xs transition"
+                  onClick={() => {
+                    playChime('arrival');
+                    triggerHaptic([100, 50, 100]);
+                    setIsNearArrivalModalOpen(true);
+                  }}
+                  className="px-3 py-1.5 rounded-lg bg-[#E5A93C]/20 border border-[#E5A93C]/40 text-[#E5A93C] text-xs font-bold transition"
                 >
-                  {isSatelliteView ? '🗺️ 기본 지도 뷰' : '🌐 위성 뷰'}
+                  ⚡ 도착 3분 전 알림
                 </button>
-                <a
-                  href="https://maps.google.com/?q=Makati+Diamond+Residences"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="px-3 py-1.5 rounded-lg bg-[#E5A93C] hover:bg-[#ffc665] text-stone-950 text-xs font-bold flex items-center gap-1 shadow transition"
+                <button
+                  onClick={() => setActiveScreen(5)}
+                  className="px-3 py-1.5 rounded-lg bg-emerald-400 text-stone-950 text-xs font-bold transition"
                 >
-                  <ExternalLink className="w-3.5 h-3.5" /> Google Maps
-                </a>
+                  Stage 5: 배송 완료 전환 →
+                </button>
               </div>
             </div>
 
-            <div className="relative h-80 sm:h-96 w-full bg-[#0A0908] overflow-hidden select-none">
-              <div 
-                className={`absolute inset-0 bg-cover bg-center transition-all duration-500 ${isSatelliteView ? 'opacity-70 filter contrast-125' : 'opacity-25'}`}
-                style={{ backgroundImage: `url('https://images.unsplash.com/photo-1524661135-423995f22d0b?auto=format&fit=crop&w=1200&q=80')` }}
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#0C0A09] via-transparent to-[#0C0A09]/70 pointer-events-none" />
-
+            {/* 레이더 캔버스 뷰 */}
+            <div className="relative h-96 w-full bg-[#0A0908] overflow-hidden select-none">
+              <div className="absolute inset-0 bg-cover bg-center opacity-30" style={{ backgroundImage: `url('https://images.unsplash.com/photo-1524661135-423995f22d0b?auto=format&fit=crop&w=1200&q=80')` }} />
               <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 1000 400" preserveAspectRatio="none">
-                <path d="M 160 295 Q 310 240, 480 170 T 800 100" fill="none" stroke="#3D2F1B" strokeWidth="4" strokeLinecap="round" />
                 <path d="M 160 295 Q 310 240, 480 170 T 800 100" fill="none" stroke="#E5A93C" strokeWidth="3" strokeDasharray="8,5" className="animate-pulse" />
               </svg>
 
+              {/* 본점 핀 */}
               <div className="absolute left-[16%] bottom-[26%] -translate-x-1/2 translate-y-1/2 flex flex-col items-center">
                 <div className="w-8 h-8 rounded-full bg-[#141210] border-2 border-[#E5A93C] flex items-center justify-center shadow-lg">
                   <span className="w-2.5 h-2.5 rounded-full bg-[#E5A93C] animate-ping" />
                 </div>
-                <div className="mt-1 px-2.5 py-1 rounded bg-black/90 border border-stone-800 text-[10px] font-mono text-center">
-                  <span className="text-white font-bold block">Tunamaru Malate 본점</span>
-                  <span className="text-[#E5A93C]">14.5739° N, 120.9835° E</span>
-                </div>
+                <span className="mt-1 px-2 py-0.5 rounded bg-black/90 border border-stone-800 text-[10px] text-white font-bold">
+                  Malate 본점
+                </span>
               </div>
 
-              <div 
-                className="absolute z-30 flex flex-col items-center transition-all duration-700"
-                style={{
-                  left: currentStage === 2 ? '16%' : currentStage === 4 ? '52%' : '80%',
-                  top: currentStage === 2 ? '74%' : currentStage === 4 ? '44%' : '25%',
-                  transform: 'translate(-50%, -50%)',
-                }}
-              >
-                <div className="w-10 h-10 rounded-full bg-[#E5A93C] text-stone-950 flex items-center justify-center font-bold shadow-2xl border-2 border-[#151311]">
+              {/* 라이더 마커 */}
+              <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center">
+                <div className="w-10 h-10 rounded-full bg-[#E5A93C] text-stone-950 flex items-center justify-center font-bold text-lg shadow-2xl border-2 border-[#151311] animate-bounce">
                   🏍️
                 </div>
-                <div className="mt-1 px-2.5 py-0.5 rounded-full bg-black/90 border border-[#E5A93C] text-[10px] font-mono text-[#E5A93C] shadow whitespace-nowrap">
-                  Danilo Reyes (EV-04 • 3.4°C 유지)
-                </div>
+                <span className="mt-1 px-2.5 py-0.5 rounded-full bg-black/90 border border-[#E5A93C] text-[10px] font-mono text-[#E5A93C]">
+                  Danilo Reyes (EV-04 • 28.5 km/h)
+                </span>
               </div>
 
+              {/* 도착지 핀 */}
               <div className="absolute right-[20%] top-[25%] translate-x-1/2 -translate-y-1/2 flex flex-col items-center">
                 <div className="w-8 h-8 rounded-full bg-emerald-950 border-2 border-emerald-400 flex items-center justify-center text-emerald-400 shadow-xl">
                   <MapPin className="w-4 h-4" />
                 </div>
-                <div className="mt-1 px-2.5 py-1 rounded bg-black/90 border border-emerald-500/40 text-[10px] font-mono text-center">
-                  <span className="text-emerald-400 font-bold block">Makati Diamond Tower 1</span>
-                  <span className="text-stone-400">도착 완료 / 로비 보관</span>
-                </div>
-              </div>
-
-              <div className="absolute bottom-3 left-3 bg-[#0C0A09]/90 border border-stone-800 rounded px-2.5 py-1 text-[10px] font-mono text-stone-400">
-                실시간 텔레메트리: 방금 전 (GPS 수신율 99.8% • 반경 4.8km 직배송)
-              </div>
-            </div>
-
-            <div className="p-3.5 bg-[#141210] border-t border-stone-800 grid grid-cols-4 gap-2 text-center text-xs">
-              <div><span className="text-stone-500 text-[10px] uppercase block">IoT Cold-Chain</span><span className="font-mono font-bold text-cyan-400">3.4°C 항온 유지</span></div>
-              <div className="border-l border-stone-800 pl-2"><span className="text-stone-500 text-[10px] uppercase block">배송 전담 크루</span><span className="font-medium text-white truncate block">Danilo Reyes (EV)</span></div>
-              <div className="border-l border-stone-800 pl-2"><span className="text-stone-500 text-[10px] uppercase block">남은 이동 거리</span><span className="font-mono text-[#E5A93C] font-bold">{currentStage === 5 ? '0.0 km (완료)' : '4.8 km (약 18분)'}</span></div>
-              <div className="border-l border-stone-800 pl-2"><span className="text-stone-500 text-[10px] uppercase block">정밀 GPS 위치</span><span className="font-mono text-emerald-400">± 1.2m 고정</span></div>
-            </div>
-          </div>
-
-          {/* 라이더 & 목적지 정보 */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="bg-[#141210] border border-stone-800 rounded-xl p-5 flex flex-col justify-between">
-              <div>
-                <div className="flex items-center justify-between mb-3 text-xs">
-                  <span className="font-bold uppercase tracking-wider text-stone-400">배정 라이더 정보</span>
-                  <span className="text-emerald-400 font-mono">● Online</span>
-                </div>
-                <div className="flex items-center gap-3.5 mb-3">
-                  <div className="w-12 h-12 rounded-full bg-[#201B17] border border-[#E5A93C]/40 flex items-center justify-center text-[#E5A93C] font-bold font-serif text-sm">
-                    DR
-                  </div>
-                  <div>
-                    <h4 className="font-serif font-bold text-white text-base">다닐로 레예스 (Danilo Reyes)</h4>
-                    <p className="text-xs text-stone-400">츠나마루 직영 전담 특송팀 #04 • ★ 4.98 (840건+)</p>
-                  </div>
-                </div>
-                <div className="bg-[#0E0C0B] p-3 rounded-lg border border-stone-800 text-xs space-y-1 font-mono">
-                  <div className="flex justify-between"><span className="text-stone-500">디스패치 허브:</span><span className="text-[#E5A93C]">Manila Bay Cold Hub #01 (Malate)</span></div>
-                  <div className="flex justify-between"><span className="text-stone-500">배송 차량:</span><span>Climate-Controlled EV Bike (NDL-8821)</span></div>
-                  <div className="flex justify-between"><span className="text-stone-500">냉장 보관함:</span><span className="text-cyan-400">Iso-Chill Dry Vault #2</span></div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-2 pt-3 border-t border-stone-800 mt-4">
-                <a href="tel:+639178821942" className="py-2.5 rounded-lg bg-[#E5A93C] text-stone-950 font-bold text-xs flex items-center justify-center gap-1.5 transition">
-                  <Phone className="w-3.5 h-3.5" /> 라이더 직통 전화
-                </a>
-                <button 
-                  onClick={() => {
-                    setChatTab('courier');
-                    document.getElementById('direct-chat-module')?.scrollIntoView({ behavior: 'smooth' });
-                  }} 
-                  className="py-2.5 rounded-lg bg-[#1D1916] border border-stone-800 text-stone-300 font-bold text-xs flex items-center justify-center gap-1.5 transition"
-                >
-                  💬 실시간 톡
-                </button>
-              </div>
-            </div>
-
-            <div className="bg-[#141210] border border-stone-800 rounded-xl p-5 flex flex-col justify-between">
-              <div>
-                <span className="text-xs font-bold uppercase tracking-wider text-stone-400 block mb-2">배송지 상세 정보</span>
-                <h4 className="font-serif font-bold text-white text-base">마카티 다이아몬드 레지던스</h4>
-                <p className="text-xs text-stone-400 mt-1">타워 1, 18-B호, 레가스피 빌리지, 마카티 시티, 메트로 마닐라</p>
-                <div className="p-3 bg-[#0E0C0B] rounded-lg border border-stone-800 text-xs mt-3 space-y-1">
-                  <div className="flex justify-between"><span className="text-stone-500">수령 위치:</span><span className="text-white">Tower 1 로비 컨시어지</span></div>
-                  <div className="flex justify-between"><span className="text-stone-500">안심 인계 방식:</span><span className="text-[#E5A93C]">비대면 컨시어지 인계</span></div>
-                  <div className="flex justify-between"><span className="text-stone-500">출입 인증:</span><span className="text-emerald-400 font-mono">도어맨 사전 승인 완료</span></div>
-                </div>
-              </div>
-
-              <div className="pt-3 border-t border-stone-800 flex items-center justify-between text-xs mt-4">
-                <span className="text-stone-400">매장 직통 컨시어지:</span>
-                <a href={`tel:${TUNAMARU_STORE.phoneIntl}`} className="text-[#E5A93C] font-mono font-bold hover:underline">
-                  {TUNAMARU_STORE.phone}
-                </a>
+                <span className="mt-1 px-2 py-0.5 rounded bg-black/90 border border-emerald-500/40 text-[10px] text-emerald-400 font-bold">
+                  Makati Diamond Tower 1
+                </span>
               </div>
             </div>
           </div>
 
-          {/* 1:1 다이렉트 톡 */}
-          <div className="bg-[#141210] border border-stone-800 rounded-2xl p-5 shadow-xl space-y-4" id="direct-chat-module">
+          {/* 1:1 다이렉트 톡 모듈 */}
+          <div className="bg-[#141210] border border-stone-800 rounded-2xl p-5 shadow-xl space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-stone-800">
-              <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
-                <h3 className="font-serif text-sm font-bold text-white">Tunamaru VIP 컨시어지 톡 & 라이더 다이렉트 챗</h3>
-              </div>
-
-              <div className="flex items-center gap-1.5 bg-[#181512] p-1 rounded-full border border-stone-800">
-                <button
-                  type="button"
-                  onClick={() => setChatTab('chef')}
-                  className={`px-3 py-1 rounded-full text-xs font-bold transition ${
-                    chatTab === 'chef' ? 'bg-[#E5A93C] text-stone-950 shadow' : 'text-stone-400'
-                  }`}
-                >
-                  매장 주방 (Chef)
+              <span className="text-xs font-bold text-white flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-emerald-400" /> Tunamaru VIP 컨시어지 톡 & 라이더 다이렉트 챗
+              </span>
+              <div className="flex gap-1 bg-[#0C0A09] p-1 rounded-full border border-stone-800">
+                <button onClick={() => setChatTab('chef')} className={`px-3 py-1 rounded-full text-xs font-bold transition ${chatTab === 'chef' ? 'bg-[#E5A93C] text-stone-950' : 'text-stone-400'}`}>
+                  매장 주방
                 </button>
-                <button
-                  type="button"
-                  onClick={() => setChatTab('courier')}
-                  className={`px-3 py-1 rounded-full text-xs font-bold transition ${
-                    chatTab === 'courier' ? 'bg-[#E5A93C] text-stone-950 shadow' : 'text-stone-400'
-                  }`}
-                >
-                  배달 라이더 (Danilo)
+                <button onClick={() => setChatTab('courier')} className={`px-3 py-1 rounded-full text-xs font-bold transition ${chatTab === 'courier' ? 'bg-[#E5A93C] text-stone-950' : 'text-stone-400'}`}>
+                  배달 라이더
                 </button>
               </div>
             </div>
 
-            <div className="space-y-3 max-h-56 overflow-y-auto pr-1">
+            <div className="space-y-3 max-h-48 overflow-y-auto pr-1 text-xs">
               {chatMessages.map((msg, i) => (
                 <div key={i} className={`flex flex-col ${msg.isUser ? 'items-end' : 'items-start'}`}>
-                  <span className="text-[10px] text-stone-500 mb-1">{msg.sender} • {msg.time}</span>
-                  <div
-                    className={`p-3 rounded-2xl text-xs max-w-[85%] leading-relaxed ${
-                      msg.isUser
-                        ? 'bg-[#E5A93C] text-stone-950 font-medium'
-                        : 'bg-[#181512] border border-stone-800 text-stone-200'
-                    }`}
-                  >
-                    <p>{msg.text}</p>
-                    {msg.isProof && (
-                      <div className="mt-2 rounded-lg overflow-hidden border border-emerald-500/40">
-                        <img 
-                          src="https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=600&q=80" 
-                          alt="Delivery Proof" 
-                          className="w-full h-32 object-cover"
-                        />
-                        <div className="p-1.5 bg-black/80 text-[10px] font-mono text-emerald-400 text-center">
-                          ✓ 로비 컨시어지 비대면 인계 사진 인증 완료
-                        </div>
-                      </div>
-                    )}
+                  <span className="text-[10px] text-stone-500 mb-0.5">{msg.sender} • {msg.time}</span>
+                  <div className={`p-3 rounded-2xl max-w-[85%] leading-relaxed ${msg.isUser ? 'bg-[#E5A93C] text-stone-950 font-bold' : 'bg-[#181512] border border-stone-800 text-stone-200'}`}>
+                    {msg.text}
                   </div>
                 </div>
               ))}
             </div>
 
-            <div className="flex items-center gap-1.5 overflow-x-auto py-1 scrollbar-none text-[11px]">
-              <span className="text-stone-500 shrink-0">빠른 답장:</span>
-              {[
-                '문 앞에 두고 벨 눌러주세요',
-                '로비 데스크에 맡겨주세요',
-                '도착 시 전화 주세요',
-              ].map((txt) => (
-                <button
-                  key={txt}
-                  type="button"
-                  onClick={() => setChatInput(txt)}
-                  className="px-2.5 py-1 rounded-full bg-[#181512] hover:bg-stone-800 text-stone-300 border border-stone-800 shrink-0 transition"
-                >
-                  {txt}
-                </button>
-              ))}
-            </div>
-
-            <form onSubmit={handleSendChat} className="flex gap-2 pt-2 border-t border-stone-800">
+            <div className="flex gap-2 pt-2 border-t border-stone-800">
               <input
                 type="text"
-                placeholder="메시지를 입력하세요 (예: 도착 전 미리 연락주세요)..."
+                placeholder="메시지를 입력하세요 (예: 도착 전 미리 전화주세요)..."
                 value={chatInput}
                 onChange={(e) => setChatInput(e.target.value)}
-                className="flex-1 bg-[#100E0C] border border-stone-800 rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none focus:border-[#E5A93C]"
+                className="flex-1 bg-[#0C0A09] border border-stone-800 rounded-xl px-3.5 py-2 text-xs text-white"
               />
               <button
-                type="submit"
-                className="px-4 py-2 rounded-xl bg-[#E5A93C] hover:bg-[#ffc665] text-stone-950 font-bold text-xs flex items-center gap-1 transition"
+                onClick={() => {
+                  if (!chatInput.trim()) return;
+                  setChatMessages([...chatMessages, { sender: '나 (Danny Jang)', time: '방금 전', text: chatInput, isUser: true }]);
+                  setChatInput('');
+                  showToast('메시지가 전송되었습니다.', '💬');
+                }}
+                className="px-4 py-2 rounded-xl bg-[#E5A93C] text-stone-950 font-bold text-xs"
               >
-                <Send className="w-3.5 h-3.5" />
-                <span>전송</span>
+                전송
               </button>
-            </form>
+            </div>
           </div>
-        </section>
+        </main>
+      )}
 
-        {/* 우측: 주문 명세서 & 재주문 버튼 */}
-        <aside className="lg:col-span-5 xl:col-span-4 space-y-6">
-          <div className="bg-[#141210] border border-stone-800 rounded-2xl p-5 sm:p-6 shadow-xl space-y-4">
-            <div className="flex items-start justify-between border-b border-stone-800 pb-3">
+      {/* ========================================================
+          화면 5: 안심 배송 완료 & 크라이오 리포트 (Image 6)
+          ======================================================== */}
+      {activeScreen === 5 && (
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-7 animate-in fade-in duration-300 flex-1">
+          <section className="bg-[#1D1B19] border border-stone-800 rounded-2xl p-6 sm:p-8 shadow-xl">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-stone-800">
               <div>
-                <h2 className="text-xs font-bold tracking-widest uppercase font-serif text-[#E5A93C]">
-                  주문 명세서 (ITEMIZED BILL)
-                </h2>
-                <p className="text-xs text-stone-500 mt-0.5">2026년 10월 30일 • 오후 7:18</p>
-              </div>
-              <span className="text-[10px] font-mono px-2 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 rounded uppercase font-bold">
-                결제 완료
-              </span>
-            </div>
-
-            <div className="space-y-3 border-b border-stone-800 pb-4 text-xs">
-              <div className="flex justify-between items-start">
-                <div>
-                  <p className="font-bold text-white">1x 연어 사시미 (Salmon Sashimi)</p>
-                  <p className="text-[11px] text-stone-400 mt-0.5">+ 생와사비 (무료) • + 시소 잎 3장 (+₱30)</p>
-                </div>
-                <span className="font-mono font-bold text-white">₱430.00</span>
-              </div>
-
-              <div className="flex justify-between items-start">
-                <div>
-                  <p className="font-bold text-white">1x 아부리 연어 롤 (Aburi Salmon Roll)</p>
-                  <p className="text-[11px] text-stone-400 mt-0.5">+ 특제 스파이시 마요 딥 (+₱25)</p>
-                </div>
-                <span className="font-mono font-bold text-white">₱375.00</span>
-              </div>
-
-              <div className="flex justify-between items-center bg-[#E5A93C]/10 border border-[#E5A93C]/30 p-2 rounded-lg text-emerald-400">
-                <span className="font-bold flex items-center gap-1">🎁 [프로모션 증정] {selectedGift.name}</span>
-                <span className="font-mono font-bold">FREE (₱0.00)</span>
-              </div>
-            </div>
-
-            <div className="space-y-1.5 text-xs">
-              <div className="flex justify-between text-stone-400"><span>주문 상품 소계</span><span className="font-mono text-white">₱805.00</span></div>
-              <div className="flex justify-between text-stone-400"><span>극저온 크라이오 단열 패킹</span><span className="font-mono text-emerald-400 font-semibold">FREE (₱0.00)</span></div>
-              <div className="flex justify-between text-stone-400"><span>전담 항온 배송료 (Makati)</span><span className="font-mono text-white">₱50.00</span></div>
-              <div className="flex justify-between text-emerald-400 font-bold"><span>Tara Pay 다이닝 할인권</span><span className="font-mono">-₱100.00</span></div>
-              <div className="pt-2 border-t border-stone-800 flex justify-between items-baseline">
-                <span className="font-serif font-bold text-sm text-white">최종 결제 금액</span>
-                <span className="text-xl font-mono font-black text-[#E5A93C]">₱755.00 PHP</span>
-              </div>
-            </div>
-
-            <div className="p-3 rounded-xl bg-[#100E0C] border border-[#2F2923] flex items-center justify-between text-xs">
-              <div>
-                <p className="font-bold text-white flex items-center gap-1.5">
-                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-                  Tara Pay 승인 완료
+                <span className="px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/40 text-emerald-400 text-xs font-bold inline-block mb-2">
+                  ✓ 배송 완료 (Delivery Completed)
+                </span>
+                <h1 className="text-2xl sm:text-3xl font-serif font-bold text-white">
+                  오마카세 배송이 신선하고 안전하게 완료되었습니다
+                </h1>
+                <p className="text-xs text-stone-400 mt-1">
+                  마카티 다이아몬드 레지던스 타워 1 로비 컨시어지 데스크에 크라이오 보냉 상태로 안심 인계되었습니다.
                 </p>
-                <p className="text-[10px] text-stone-500 font-mono mt-0.5">TXN: #TP-20261030-99482-PH</p>
               </div>
-              <span className="px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 font-mono text-[10px] font-bold">
-                즉시 정산됨
-              </span>
-            </div>
-
-            <div className="space-y-2 pt-2">
-              <button
-                type="button"
-                onClick={() => setIsReorderDrawerOpen(true)}
-                className="w-full py-3 rounded-xl bg-[#E5A93C] hover:bg-[#ffc665] text-stone-950 font-black text-xs sm:text-sm shadow-lg transition active:scale-95 flex items-center justify-center gap-1.5"
-              >
-                <span>🍣 동일 메뉴 1초 재주문 (Re-order)</span>
-              </button>
 
               <button
-                type="button"
-                onClick={() => alert('BIR 정식 전자 세금 전표 #TP-99482 다운로드가 시작되었습니다.')}
-                className="w-full py-2.5 rounded-xl bg-stone-900 hover:bg-stone-800 border border-stone-800 text-stone-300 text-xs font-semibold flex items-center justify-center gap-1.5 transition"
+                onClick={() => {
+                  setActiveScreen(1);
+                  showToast('동일 메뉴가 장바구니에 담겼습니다.', '🍣');
+                }}
+                className="px-5 py-3 rounded-xl bg-[#E5A93C] text-stone-950 font-black text-xs sm:text-sm shadow transition hover:bg-[#ffc665]"
               >
-                <Download className="w-3.5 h-3.5 text-[#E5A93C]" />
-                <span>BIR 공식 전자영수증 다운로드</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setIsHistoryModalOpen(true)}
-                className="w-full py-2.5 rounded-xl bg-stone-900 hover:bg-stone-800 border border-stone-800 text-stone-300 text-xs font-semibold transition"
-              >
-                전체 주문 내역 (Order History) 보기
+                🍣 동일 메뉴 1초 재주문
               </button>
             </div>
-          </div>
-        </aside>
-      </div>
 
-      {/* 도착 3분 전 안내 팝업 */}
+            {/* 실물 인증 사진 & 온도 감사 리포트 */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 pt-6">
+              <div className="lg:col-span-7 rounded-2xl overflow-hidden border border-stone-800 relative bg-black">
+                <img 
+                  src="https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=1000&q=80" 
+                  alt="Drop-off Proof" 
+                  className="w-full h-80 object-cover opacity-85" 
+                />
+                <div className="absolute bottom-3 left-3 right-3 p-3 rounded-xl bg-black/85 border border-stone-800 text-xs flex justify-between items-center">
+                  <div>
+                    <p className="font-bold text-white">Makati Diamond Residences Tower 1 Concierge Desk</p>
+                    <span className="text-[10px] text-stone-400">골드 씰 크라이오 박스 무결성 검수 완료 • Mr. Santos 인계</span>
+                  </div>
+                  <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-mono text-[10px] font-bold">
+                    19:48 PHT 인계 완료
+                  </span>
+                </div>
+              </div>
+
+              <div className="lg:col-span-5 bg-[#141210] border border-stone-800 rounded-2xl p-5 space-y-4 flex flex-col justify-between">
+                <div>
+                  <span className="text-xs font-bold uppercase tracking-wider text-[#E5A93C] block mb-1">
+                    도요스 콜드체인 실시간 감사 리포트
+                  </span>
+                  <p className="text-xs text-stone-400 leading-relaxed">
+                    말라테 본점 출고부터 마카티 로비 인계까지 전 구간 3°C 이하를 완벽히 유지했습니다.
+                  </p>
+                  
+                  {/* 온도 그래프 */}
+                  <div className="mt-4 p-3 rounded-xl bg-[#0C0A09] border border-stone-800 space-y-2">
+                    <div className="flex justify-between text-xs">
+                      <span className="text-stone-500">도착 시점 온도</span>
+                      <span className="font-mono text-emerald-400 font-bold">2.8°C (정상 적합)</span>
+                    </div>
+                    <svg className="w-full h-20 text-[#E5A93C]" viewBox="0 0 300 80" fill="none">
+                      <line x1="0" y1="20" x2="300" y2="20" stroke="#ffb4ab" strokeDasharray="4 4" strokeWidth="1" />
+                      <path d="M0,50 Q150,45 300,35" stroke="currentColor" strokeWidth="2.5" />
+                      <circle cx="300" cy="35" r="4" fill="currentColor" />
+                    </svg>
+                    <div className="flex justify-between text-[10px] text-stone-500 font-mono">
+                      <span>본점 출고 (2.4°C)</span>
+                      <span>로비 인계 (2.8°C)</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-3.5 rounded-xl bg-[#1C1814] border border-stone-800 text-center space-y-2">
+                  <span className="text-xs font-bold text-white block">식음 경험 만족도 평가 (+150P 지급)</span>
+                  <div className="flex justify-center gap-1.5 text-xl text-[#E5A93C]">
+                    {[1, 2, 3, 4, 5].map((s) => (
+                      <button key={s} onClick={() => setRating(s)} className="hover:scale-110 transition">
+                        ★
+                      </button>
+                    ))}
+                  </div>
+                  <button
+                    onClick={() => {
+                      playChime('fanfare');
+                      showToast('⭐️ 5.0 만점 평가 및 VIP 150P가 적립되었습니다!', '🎉');
+                    }}
+                    className="w-full py-2.5 rounded-lg bg-[#E5A93C] text-stone-950 font-bold text-xs shadow-md"
+                  >
+                    평가 제출하고 150P 적립받기
+                  </button>
+                </div>
+              </div>
+            </div>
+          </section>
+        </main>
+      )}
+
+      {/* 도착 3분 전 안내 팝업 모달 */}
       {isNearArrivalModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
           <div className="relative w-full max-w-lg bg-[#151311] border-2 border-[#E5A93C] rounded-2xl shadow-2xl p-6 space-y-4 animate-in zoom-in-95">
@@ -736,7 +888,7 @@ export default function OrderTrackingPage() {
             </div>
 
             <p className="text-xs text-stone-300 leading-relaxed">
-              전담 라이더 <strong className="text-[#E5A93C]">Danilo Reyes</strong> 님이 마카티 다이아몬드 레지던스 반경 300m 이내에 진입했습니다. 요청하신 로비 컨시어지(Mr. Santos) 비대면 인계를 준비합니다.
+              전담 라이더 <strong className="text-[#E5A93C]">Danilo Reyes</strong> 님이 마카티 다이아몬드 레지던스 반경 300m 이내에 진입했습니다. 요청하신 로비 컨시어지 비대면 인계를 준비합니다.
             </p>
 
             <div className="grid grid-cols-2 gap-2 pt-2">
@@ -762,212 +914,6 @@ export default function OrderTrackingPage() {
           </div>
         </div>
       )}
-
-      {/* 5단계 완료 모달 */}
-      {isDeliveryCompletedModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
-          <canvas ref={canvasRef} className="absolute inset-0 pointer-events-none z-10" />
-          <div className="relative w-full max-w-lg bg-[#151311] border-2 border-emerald-400 rounded-2xl shadow-2xl p-6 text-center space-y-4 z-20 animate-in zoom-in-95">
-            <div className="w-16 h-16 rounded-full bg-emerald-500/20 border-2 border-emerald-400 flex items-center justify-center text-3xl mx-auto shadow-lg">
-              🎺
-            </div>
-            <h3 className="text-xl font-serif font-bold text-white">미식의 정점, 고객님께 전달 완료!</h3>
-            <p className="text-xs text-stone-300">
-              마카티 다이아몬드 레지던스 컨시어지 안전 인계가 완벽히 완료되었습니다.
-            </p>
-
-            <div className="p-3.5 rounded-xl bg-gradient-to-r from-amber-500/10 via-[#1A1714] to-emerald-950/20 border border-[#E5A93C]/40 text-left space-y-1">
-              <span className="font-bold text-[#E5A93C] text-xs block">VIP 다이닝 감사 포인트 +150P 적립 완료</span>
-              <p className="text-[11px] text-stone-400">최상의 선도를 지킨 오마카세 츠나마루를 찾아주셔서 감사드립니다.</p>
-            </div>
-
-            <button
-              onClick={() => setIsDeliveryCompletedModalOpen(false)}
-              className="w-full py-3 rounded-xl bg-[#E5A93C] hover:bg-[#ffc665] text-stone-950 font-bold text-xs shadow-lg transition"
-            >
-              ✓ 확인 및 맛있게 식사하기
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* 재주문 드로어 */}
-      {isReorderDrawerOpen && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex justify-end">
-          <div className="w-full max-w-md bg-[#1D1B19] border-l border-stone-800 h-full flex flex-col justify-between p-6 overflow-y-auto animate-in slide-in-from-right">
-            <div>
-              <div className="flex items-center justify-between pb-3 border-b border-stone-800">
-                <div className="flex items-center gap-2">
-                  <ShoppingBag className="w-5 h-5 text-[#E5A93C]" />
-                  <h3 className="font-serif font-bold text-white text-base">장바구니 (Re-order Cart)</h3>
-                </div>
-                <button onClick={() => setIsReorderDrawerOpen(false)} className="text-stone-400 hover:text-white">
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-
-              <div className="mt-4 p-3 rounded-xl bg-[#E5A93C]/15 border border-[#E5A93C] flex items-center justify-between">
-                <div className="flex items-center gap-2 text-xs">
-                  <span className="text-lg">🎁</span>
-                  <div>
-                    <span className="font-bold text-[#E5A93C] block">무료 음료 증정 프로모션</span>
-                    <span className="text-[10px] text-stone-300">{selectedGift.name} 적용됨</span>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setIsGiftModalOpen(true)}
-                  className="px-2.5 py-1 rounded-lg bg-[#E5A93C] text-stone-950 text-[10px] font-bold"
-                >
-                  음료 변경
-                </button>
-              </div>
-
-              <div className="mt-4 space-y-3 text-xs">
-                <div className="p-3 bg-[#151311] border border-stone-800 rounded-xl flex justify-between items-center">
-                  <div>
-                    <p className="font-bold text-white">Salmon Sashimi (1x)</p>
-                    <span className="text-[#E5A93C] font-mono">₱430.00</span>
-                  </div>
-                  <span className="px-2 py-0.5 rounded bg-stone-800 text-stone-400 font-mono">Qty 1</span>
-                </div>
-                <div className="p-3 bg-[#151311] border border-stone-800 rounded-xl flex justify-between items-center">
-                  <div>
-                    <p className="font-bold text-white">Aburi Salmon Roll (1x)</p>
-                    <span className="text-[#E5A93C] font-mono">₱375.00</span>
-                  </div>
-                  <span className="px-2 py-0.5 rounded bg-stone-800 text-stone-400 font-mono">Qty 1</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="pt-4 border-t border-stone-800 space-y-3">
-              <div className="flex justify-between items-baseline">
-                <span className="text-xs text-stone-400">총 결제 금액</span>
-                <span className="text-xl font-mono font-bold text-[#E5A93C]">₱755.00 PHP</span>
-              </div>
-              <button
-                onClick={() => {
-                  setIsReorderDrawerOpen(false);
-                  setIsPaymentModalOpen(true);
-                }}
-                className="w-full py-3.5 bg-[#E5A93C] hover:bg-[#ffc665] text-stone-950 font-bold rounded-xl text-xs transition"
-              >
-                Tara Pay로 즉시 결제하기 (₱755.00) →
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* 음료 선택 모달 */}
-      {isGiftModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85">
-          <div className="w-full max-w-sm bg-[#1D1B19] border border-[#E5A93C] rounded-2xl p-5 space-y-3">
-            <h4 className="font-bold text-white text-sm">무료 증정 음료 선택</h4>
-            <div className="space-y-2">
-              {[
-                { name: '콜라 / Coke (330ml)', icon: '🥤' },
-                { name: '스프라이트 / Sprite (330ml)', icon: '🍋' },
-                { name: '생수 / Mineral Water (330ml)', icon: '💧' },
-              ].map((g) => (
-                <button
-                  key={g.name}
-                  onClick={() => {
-                    setSelectedGift(g);
-                    setIsGiftModalOpen(false);
-                    showToast(`증정 음료가 '${g.name}'(으)로 변경되었습니다.`, '🎁');
-                  }}
-                  className="w-full p-3 rounded-xl border border-stone-800 bg-[#151311] hover:border-[#E5A93C] flex items-center gap-3 text-xs text-white transition"
-                >
-                  <span className="text-xl">{g.icon}</span>
-                  <span className="font-bold">{g.name}</span>
-                  <span className="ml-auto font-mono text-emerald-400 font-bold">FREE (₱0)</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* 결제 모달 */}
-      {isPaymentModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
-          <div className="w-full max-w-md bg-[#1D1B19] border border-[#E5A93C] rounded-2xl p-6 space-y-4">
-            <div className="flex justify-between items-center pb-2 border-b border-stone-800">
-              <h4 className="font-serif font-bold text-white text-sm">Tara Pay 간편 결제 센터</h4>
-              <button onClick={() => setIsPaymentModalOpen(false)} className="text-stone-400 hover:text-white">
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <div className="p-4 rounded-xl bg-[#151311] border border-stone-800 space-y-2 text-xs">
-              <div className="flex justify-between text-stone-400"><span>현재 보유 지갑 잔액</span><span className="font-mono text-white">₱2,450.00</span></div>
-              <div className="flex justify-between text-rose-400"><span>주문 결제 차감액</span><span className="font-mono font-bold">-₱755.00</span></div>
-              <div className="pt-2 border-t border-stone-800 flex justify-between text-sm font-bold text-[#E5A93C]">
-                <span>결제 후 예상 잔액</span>
-                <span className="font-mono">₱{walletBalance.toFixed(2)}</span>
-              </div>
-            </div>
-
-            <div className="p-3 bg-[#E5A93C]/10 border border-[#E5A93C]/40 rounded-xl text-xs text-[#E5A93C] flex items-center gap-2">
-              <span>🪙</span>
-              <span><strong>+22.65P</strong> (3% VIP 캐시백) 즉시 적립 예정</span>
-            </div>
-
-            <button
-              onClick={() => {
-                setIsPaymentModalOpen(false);
-                playChime('arrival');
-                showToast('Tara Wallet 결제 완료! ₱755.00 차감 및 +22.65P 적립 완료!', '🎉');
-              }}
-              className="w-full py-3.5 bg-[#E5A93C] hover:bg-[#ffc665] text-stone-950 font-bold text-xs rounded-xl shadow-lg transition"
-            >
-              ₱755.00 원클릭 승인하기
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* 주문 내역 모달 */}
-      {isHistoryModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-          <div className="w-full max-w-2xl bg-[#1D1B19] border border-stone-800 rounded-2xl p-6 space-y-4 max-h-[85vh] overflow-y-auto">
-            <div className="flex justify-between items-center pb-3 border-b border-stone-800">
-              <h3 className="font-serif font-bold text-white text-base">주문 내역 (Order History)</h3>
-              <button onClick={() => setIsHistoryModalOpen(false)} className="text-stone-400 hover:text-white">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="space-y-3 text-xs">
-              <div className="p-4 rounded-xl bg-[#151311] border border-emerald-500/40 space-y-2">
-                <div className="flex justify-between items-center border-b border-stone-800 pb-2">
-                  <span className="text-emerald-400 font-bold">5단계: 배송 완료 (오늘)</span>
-                  <span className="font-mono text-[#E5A93C] font-bold">₱755.00</span>
-                </div>
-                <p className="text-stone-300">• Salmon Sashimi x1 • Aburi Salmon Roll x1 • 무료 콜라 330ml x1</p>
-                <p className="text-stone-500 font-mono">배송지: Makati Diamond Residences Tower 1 (Mr. Santos 인계)</p>
-              </div>
-
-              <div className="p-4 rounded-xl bg-[#151311] border border-stone-800 space-y-2 opacity-75">
-                <div className="flex justify-between items-center border-b border-stone-800 pb-2">
-                  <span className="text-stone-400">배송 완료 (10월 24일)</span>
-                  <span className="font-mono text-stone-300 font-bold">₱1,120.00</span>
-                </div>
-                <p className="text-stone-400">• 특선 모둠 사시미 9종 (Tokusen Moriawase) x1</p>
-              </div>
-            </div>
-
-            <button
-              onClick={() => setIsHistoryModalOpen(false)}
-              className="w-full py-2.5 bg-stone-900 border border-stone-800 text-stone-300 hover:text-white rounded-xl text-xs font-bold"
-            >
-              닫기
-            </button>
-          </div>
-        </div>
-      )}
-
     </div>
   );
 }

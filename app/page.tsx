@@ -459,7 +459,7 @@ export default function MasterPrototypePage() {
               </div>
             </div>
 
-            {/* 결제 요약 */}
+            {/* 우측 결제 요약 카드 */}
             <div className="lg:col-span-4 bg-[#141210] p-6 rounded-2xl border border-stone-800 space-y-4 lg:sticky lg:top-24">
               <h3 className="font-serif font-bold text-white text-base">결제 예정 내역</h3>
               <div className="space-y-2 text-xs text-stone-400 border-b border-stone-800 pb-3">

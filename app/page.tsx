@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { 
   Building, 
@@ -90,6 +90,18 @@ export default function MasterPrototypePage() {
     setTimeout(() => setToastMsg(null), 3000);
   };
 
+  // 모바일 햅틱 진동 피드백 엔진
+  const triggerHaptic = (pattern = [100, 50, 100]) => {
+    if (typeof window !== 'undefined' && 'vibrate' in navigator) {
+      try {
+        navigator.vibrate(pattern);
+      } catch (e) {
+        console.debug(e);
+      }
+    }
+  };
+
+  // Web Audio 차임벨 사운드 엔진
   const playChime = () => {
     if (!isAudioEnabled || typeof window === 'undefined') return;
     try {
@@ -411,7 +423,6 @@ export default function MasterPrototypePage() {
                   </div>
                 </div>
 
-                {/* 3단 수령 프로토콜 */}
                 <div className="pt-2">
                   <label className="text-stone-400 block mb-2 text-xs">배송 수령 프로토콜</label>
                   <div className="grid grid-cols-3 gap-2 text-xs">
@@ -459,7 +470,7 @@ export default function MasterPrototypePage() {
               </div>
             </div>
 
-            {/* 우측 결제 요약 카드 */}
+            {/* 결제 요약 카드 */}
             <div className="lg:col-span-4 bg-[#141210] p-6 rounded-2xl border border-stone-800 space-y-4 lg:sticky lg:top-24">
               <h3 className="font-serif font-bold text-white text-base">결제 예정 내역</h3>
               <div className="space-y-2 text-xs text-stone-400 border-b border-stone-800 pb-3">
